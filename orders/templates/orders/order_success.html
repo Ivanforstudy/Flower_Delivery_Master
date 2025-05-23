@@ -1,0 +1,7 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h2>Спасибо за заказ!</h2>
+<p>Мы свяжемся с вами для подтверждения доставки.</p>
+<a href="{% url 'catalog:product_list' %}">Вернуться в каталог</a>
+{% endblock %}

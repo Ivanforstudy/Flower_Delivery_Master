@@ -1,0 +1,16 @@
+<hr>
+<h3>Отзывы</h3>
+{% if product.reviews.all %}
+    {% for review in product.reviews.all %}
+        <p><strong>{{ review.user.username }}</strong> — {{ review.rating }}★<br>
+        {{ review.text }}</p>
+    {% endfor %}
+{% else %}
+    <p>Отзывов пока нет.</p>
+{% endif %}
+
+{% if user.is_authenticated %}
+    <a href="{% url 'reviews:add_review' product.id %}">Оставить отзыв</a>
+{% else %}
+    <p><a href="{% url 'users:login' %}">Войдите</a>, чтобы оставить отзыв.</p>
+{% endif %}

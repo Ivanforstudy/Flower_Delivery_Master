@@ -1,0 +1,15 @@
+{% extends 'base.html' %}
+{% block content %}
+<h2>Аналитика за день</h2>
+<form method="get">
+    <label for="date">Выберите дату:</label>
+    <input type="date" id="date" name="date" value="{{ selected_date }}">
+    <button type="submit">Показать</button>
+</form>
+
+<hr>
+
+<p><strong>Дата:</strong> {{ selected_date }}</p>
+<p><strong>Количество заказов:</strong> {{ total_orders }}</p>
+<p><strong>Общая выручка:</strong> {{ total_revenue }} ₽</p>
+{% endblock %}
