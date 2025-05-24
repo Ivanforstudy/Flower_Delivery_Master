@@ -32,6 +32,7 @@ DATABASES = {
         'NAME': BASE_DIR / 'db.sqlite3',
     }
 }
+ROOT_URLCONF = 'flower_delivery_master.urls'
 
 # Настройки языка и времени
 LANGUAGE_CODE = 'ru-ru'
