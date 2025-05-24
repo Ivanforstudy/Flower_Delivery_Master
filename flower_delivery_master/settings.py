@@ -2,7 +2,11 @@ from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+# Включаем режим отладки для разработки
+DEBUG = True
 
+# Пока разрешаем все хосты, чтобы избежать ошибок. В продакшене обязательно указать реальные домены.
+ALLOWED_HOSTS = []
 
 INSTALLED_APPS = [
     'django.contrib.admin',
