@@ -2,6 +2,8 @@ from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+SECRET_KEY = '#q4!w-b6(dv0p@6*g1!uu$8(sf)6=y$9(rtu2rz)kzv$ym+$il'
+
 # Включаем режим отладки для разработки
 DEBUG = True
 
