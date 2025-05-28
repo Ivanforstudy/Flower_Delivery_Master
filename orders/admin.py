@@ -1,14 +1,11 @@
-
-
 from django.contrib import admin
-from .models import Order
+from .models import TelegramOrder
 
 
+@admin.register(TelegramOrder)
+class TelegramOrderAdmin(admin.ModelAdmin):
+    list_display = ('id', 'username', 'bouquet_name', 'address', 'created_at')
+    search_fields = ('username', 'bouquet_name', 'address')
+    list_filter = ('created_at',)
 
-class OrderAdmin(admin.ModelAdmin):
-    list_display = ('id', 'user', 'status', 'created_at')
-    list_filter = ('status',)
-    search_fields = ('user__username',)
-    filter_horizontal = ('products',)
 
-admin.site.register(Order, OrderAdmin)
