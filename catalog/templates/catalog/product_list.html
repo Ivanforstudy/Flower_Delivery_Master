@@ -1,0 +1,8 @@
+<h2>Каталог цветов</h2>
+<ul>
+    {% for product in products %}
+        <li>
+            <a href="{% url 'catalog:product_detail' product.pk %}">{{ product.name }}</a> — {{ product.price }} руб.
+        </li>
+    {% endfor %}
+</ul>

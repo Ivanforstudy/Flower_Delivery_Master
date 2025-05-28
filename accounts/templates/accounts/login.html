@@ -1,0 +1,16 @@
+{% extends 'main/base.html' %}
+{% block content %}
+<h2>Вход</h2>
+
+{% if messages %}
+  {% for message in messages %}
+    <div class="alert">{{ message }}</div>
+  {% endfor %}
+{% endif %}
+
+<form method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit">Войти</button>
+</form>
+{% endblock %}

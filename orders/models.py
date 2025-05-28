@@ -1,19 +1,15 @@
+# orders/models.py
+
 from django.db import models
-from django.conf import settings
-from catalog.models import Product
+from django.contrib.auth import get_user_model
+from catalog.models import Product  # Импортировать модель продукта
 
 class Order(models.Model):
-    STATUS_CHOICES = (
-        ('new', 'Новый'),
-        ('processing', 'В обработке'),
-        ('completed', 'Завершён'),
-        ('cancelled', 'Отменён'),
-    )
-
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
-    products = models.ManyToManyField(Product)
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='new')
+    user = models.ForeignKey(get_user_model(), on_delete=models.SET_NULL, null=True, blank=True)
+    status = models.CharField(max_length=50, default='Новый')
+    total_price = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    comment = models.TextField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
-
+    products = models.ManyToManyField(Product, related_name='orders', blank=True)
     def __str__(self):
-        return f"Order #{self.id} ({self.user.username})"
+        return f"Заказ #{self.id} - {self.status}"

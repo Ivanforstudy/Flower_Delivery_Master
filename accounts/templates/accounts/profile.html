@@ -1,0 +1,13 @@
+{% extends 'main/base.html' %}
+{% block content %}
+<h2>Профиль пользователя</h2>
+
+{% if messages %}
+  {% for message in messages %}
+    <div class="alert">{{ message }}</div>
+  {% endfor %}
+{% endif %}
+
+<p>Вы вошли как: {{ request.user.username }}</p>
+<a href="{% url 'accounts:logout' %}">Выйти</a>
+{% endblock %}
