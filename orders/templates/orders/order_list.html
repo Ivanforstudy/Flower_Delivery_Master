@@ -1,0 +1,21 @@
+{% extends 'main/base.html' %}
+
+{% block title %}Список заказов{% endblock %}
+
+{% block content %}
+  <h1>🧾 Список заказов</h1>
+
+  {% if orders %}
+    <ul>
+      {% for order in orders %}
+        <li>
+          <a href="{% url 'orders:order_detail' order.id %}">
+           {{ order.bouquet_name }} — {{ order.telegram_user_id }} ({{ order.created_at|date:"d.m.Y H:i" }})
+          </a>
+        </li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <p>Заказов пока нет.</p>
+  {% endif %}
+{% endblock %}
