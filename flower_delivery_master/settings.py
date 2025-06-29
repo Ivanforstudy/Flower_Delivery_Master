@@ -5,8 +5,10 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = '#q4!w-b6(dv0p@6*g1!uu$8(sf)6=y$9(rtu2rz)kzv$ym+$il'
 
 DEBUG = True
-ALLOWED_HOSTS = []
 
+ALLOWED_HOSTS = ['127.0.0.1', 'localhost']
+
+# Приложения
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
@@ -40,12 +42,12 @@ ROOT_URLCONF = 'flower_delivery_master.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [BASE_DIR / 'templates'],  # Глобальные шаблоны, если будут
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
                 'django.template.context_processors.debug',
-                'django.template.context_processors.request',  # нужно для messages и login
+                'django.template.context_processors.request',  # Нужно для messages и login
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
             ],
@@ -55,6 +57,8 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'flower_delivery_master.wsgi.application'
 
+
+# База данных
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
@@ -62,23 +66,36 @@ DATABASES = {
     }
 }
 
+
+# Локализация
 LANGUAGE_CODE = 'ru-ru'
 TIME_ZONE = 'Europe/Moscow'
 USE_I18N = True
 USE_L10N = True
 USE_TZ = True
 
-STATIC_URL = '/static/'
-STATICFILES_DIRS = [BASE_DIR / 'static']
-STATIC_ROOT = BASE_DIR / 'staticfiles'
 
+# Статика
+STATIC_URL = '/static/'
+STATICFILES_DIRS = [BASE_DIR / 'static']  # Для разработки
+STATIC_ROOT = BASE_DIR / 'staticfiles'    # Для продакшена (collectstatic)
+
+# Медиа
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
-DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
+# Пользовательская модель
 AUTH_USER_MODEL = 'accounts.CustomUser'
 
+
+# Перенаправления после логина/логаута
 LOGIN_REDIRECT_URL = '/'
 LOGOUT_REDIRECT_URL = '/accounts/login/'
-ПРИВЕТ
+
+
+# Телеграм-бот
+TELEGRAM_BOT_TOKEN = '7763598812:AAHa-yOc3rZ0wINeAptiE6ktRflzADi_OqU'
+
+# Настройка автоидентификаторов
+DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
