@@ -1,26 +1,27 @@
 from django.shortcuts import render
-from django.contrib.admin.views.decorators import staff_member_required
-from orders.models import Order
-from django.db.models import Sum, Count
-from datetime import datetime
+from orders.models import Order, TelegramOrder
+from django.utils.timezone import now
+from datetime import timedelta
 
-@staff_member_required
-def daily_report(request):
-    date_str = request.GET.get('date')
-    if date_str:
-        try:
-            selected_date = datetime.strptime(date_str, '%Y-%m-%d').date()
-        except ValueError:
-            selected_date = datetime.today().date()
-    else:
-        selected_date = datetime.today().date()
 
-    orders = Order.objects.filter(created_at__date=selected_date)
-    total_orders = orders.count()
-    total_revenue = orders.aggregate(Sum('total_price'))['total_price__sum'] or 0
+def dashboard(request):
+    today = now().date()
+    web_orders = Order.objects.filter(created_at__date=today).count()
+    telegram_orders = TelegramOrder.objects.filter(created_at__date=today).count()
 
-    return render(request, 'analytics/report.html', {
-        'selected_date': selected_date,
+    web_revenue = sum(order.products.aggregate(total=models.Sum('price'))['total'] or 0 for order in Order.objects.filter(created_at__date=today))
+    telegram_revenue = TelegramOrder.objects.filter(created_at__date=today).count() * 1000  # Допустим, каждая позиция в Telegram по 1000 руб.
+
+    total_orders = web_orders + telegram_orders
+    total_revenue = web_revenue + telegram_revenue
+
+    context = {
         'total_orders': total_orders,
         'total_revenue': total_revenue,
-    })
+        'web_orders': web_orders,
+        'telegram_orders': telegram_orders,
+        'web_revenue': web_revenue,
+        'telegram_revenue': telegram_revenue,
+    }
+    return render(request, 'analytics/dashboard.html', context)
+

@@ -1,27 +1,14 @@
 {% extends 'main/base.html' %}
 
-{% block title %}Каталог цветов{% endblock %}
-
 {% block content %}
-  <h1>💐 Каталог цветов</h1>
-
-  {% if products %}
-    <div class="product-list">
-      <ul style="list-style: none; padding: 0;">
-        {% for product in products %}
-          <li style="margin-bottom: 20px;">
-            <a href="{% url 'catalog:product_detail' product.pk %}" style="font-size: 18px; font-weight: bold;">
-              {{ product.name }}
-            </a><br>
-            {% if product.image %}
-              <img src="{{ product.image.url }}" alt="{{ product.name }}" style="max-width: 200px; height: auto;"><br>
-            {% endif %}
-            <span style="font-size: 16px;">Цена: {{ product.price }} руб.</span>
-          </li>
-        {% endfor %}
-      </ul>
-    </div>
-  {% else %}
-    <p>😢 Пока нет доступных букетов.</p>
-  {% endif %}
+<h2>Каталог цветов</h2>
+<ul>
+    {% for product in products %}
+        <li>
+            <a href="{% url 'catalog:product_detail' product.pk %}">
+                {{ product.name }}
+            </a> — {{ product.price }} руб.
+        </li>
+    {% endfor %}
+</ul>
 {% endblock %}

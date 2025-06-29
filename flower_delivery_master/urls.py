@@ -5,11 +5,16 @@ from django.conf.urls.static import static
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('', include('main.urls')),       # ← это обязательно!
+    path('', include('main.urls')),
     path('catalog/', include('catalog.urls')),
     path('orders/', include('orders.urls')),
-    path('accounts/', include('accounts.urls')),
     path('reviews/', include('reviews.urls')),
     path('analytics/', include('analytics.urls')),
-    path('telegram/', include('telegram_bot.urls')),
-] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+    path('accounts/', include('accounts.urls')),
+    path('telegram_bot/', include('telegram_bot.urls')),
+    path('analytics/', include('analytics.urls')),
+]
+
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+    urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)

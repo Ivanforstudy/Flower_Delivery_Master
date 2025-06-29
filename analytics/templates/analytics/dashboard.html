@@ -1,0 +1,14 @@
+{% extends 'main/base.html' %}
+
+{% block content %}
+<h2>Аналитика за сегодня</h2>
+
+<ul>
+    <li>Заказы с сайта: {{ web_orders }}</li>
+    <li>Заказы из Telegram: {{ telegram_orders }}</li>
+    <li>Всего заказов: {{ total_orders }}</li>
+    <li>Выручка с сайта: {{ web_revenue }} руб.</li>
+    <li>Выручка из Telegram: {{ telegram_revenue }} руб.</li>
+    <li>Общая выручка: {{ total_revenue }} руб.</li>
+</ul>
+{% endblock %}
