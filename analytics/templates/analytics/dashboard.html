@@ -1,14 +1,28 @@
-{% extends 'main/base.html' %}
+{% extends "main/base.html" %}
+{% load static %}
+
+{% block title %}Аналитика{% endblock %}
 
 {% block content %}
-<h2>Аналитика за сегодня</h2>
+<h2>📊 Аналитика за {{ date }}</h2>
 
-<ul>
-    <li>Заказы с сайта: {{ web_orders }}</li>
-    <li>Заказы из Telegram: {{ telegram_orders }}</li>
-    <li>Всего заказов: {{ total_orders }}</li>
-    <li>Выручка с сайта: {{ web_revenue }} руб.</li>
-    <li>Выручка из Telegram: {{ telegram_revenue }} руб.</li>
-    <li>Общая выручка: {{ total_revenue }} руб.</li>
-</ul>
+<div>
+    <h3>Веб-заказы</h3>
+    <p>Количество заказов: {{ web_orders_count }}</p>
+    <p>Выручка: {{ web_orders_revenue }} руб.</p>
+</div>
+
+<div>
+    <h3>Телеграм-заказы</h3>
+    <p>Количество заказов: {{ telegram_orders_count }}</p>
+    <p>Выручка: {{ telegram_orders_revenue }} руб.</p>
+</div>
+
+<hr>
+
+<div>
+    <h3>Итог</h3>
+    <p>Всего заказов: {{ total_orders }}</p>
+    <p>Общая выручка: {{ total_revenue }} руб.</p>
+</div>
 {% endblock %}

@@ -1,13 +1,11 @@
 from django.shortcuts import render, redirect
+from django.contrib.auth.decorators import login_required
 from .models import Review
 from .forms import ReviewForm
-from django.contrib.auth.decorators import login_required
-
 
 def review_list(request):
-    reviews = Review.objects.all().order_by('-created_at')
+    reviews = Review.objects.all()
     return render(request, 'reviews/review_list.html', {'reviews': reviews})
-
 
 @login_required
 def add_review(request):

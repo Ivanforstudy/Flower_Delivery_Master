@@ -1,134 +1,121 @@
 import os
 import django
 import logging
-from datetime import datetime, time
+from datetime import datetime, time, timedelta, timezone
 
 from telegram import Update
-from telegram.ext import Application, CommandHandler, MessageHandler, filters, ConversationHandler, ContextTypes
+from telegram.ext import (
+    Application,
+    CommandHandler,
+    MessageHandler,
+    filters,
+    ConversationHandler,
+    ContextTypes,
+)
 
-# Django настройки
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'flower_delivery_master.settings')
+# Django setup
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "flower_delivery_master.settings")
 django.setup()
 
-from catalog.models import Product
 from orders.models import TelegramOrder
 
 # Логирование
 logging.basicConfig(
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    level=logging.INFO
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    level=logging.INFO,
 )
-logger = logging.getLogger(__name__)
 
-# Состояния для ConversationHandler
-BOUQUET, ADDRESS = range(2)
-
-# 🔔 Данные для уведомлений
+# Telegram Bot Token и Admin ID
 BOT_TOKEN = '7763598812:AAHa-yOc3rZ0wINeAptiE6ktRflzADi_OqU'
-ADMIN_CHAT_ID = 2111297101
+ADMIN_ID = 2111297101
+
+# Этапы ConversationHandler
+BOUQUET_NAME, DELIVERY_ADDRESS = range(2)
 
 
-# Проверка рабочего времени
-def is_working_hours():
-    now = datetime.now()
+# Проверка, рабочий день или нет
+def is_working_day_and_time():
+    now = datetime.now(timezone.utc) + timedelta(hours=3)  # МСК
+    weekday = now.weekday()  # 0-понедельник, 6-воскресенье
     current_time = now.time()
-    current_day = now.weekday()  # Пн=0, ..., Вс=6
 
-    if current_day >= 5:
-        return 'weekend'
+    if weekday in [5, 6]:
+        return False, "Сегодня выходной.\nЗаказы принимаются с ПОНЕДЕЛЬНИКА по ПЯТНИЦУ с 09:00 до 19:00."
 
-    if time(9, 0) <= current_time <= time(19, 0):
-        return 'open'
+    if not (time(9, 0) <= current_time <= time(19, 0)):
+        return False, "Заказы принимаются только с 09:00 до 19:00.\nПопробуйте позже."
 
-    return 'closed'
+    return True, None
 
 
 # Старт
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    status = is_working_hours()
+    user = update.effective_user
 
-    if status == 'weekend':
+    is_open, message = is_working_day_and_time()
+    if not is_open:
         await update.message.reply_text(
-            "🌸 Добро пожаловать в Flower Delivery Master!\n"
-            "Сегодня выходной.\n"
-            "Заказы принимаются с понедельника по пятницу с 09:00 до 19:00."
+            f"🌸 Добро пожаловать в Flower Delivery Master!\n\n{message}"
         )
         return ConversationHandler.END
 
-    if status == 'closed':
-        await update.message.reply_text(
-            "Заказы принимаются только с 09:00 до 19:00.\nПопробуйте позже."
-        )
-        return ConversationHandler.END
+    await update.message.reply_text(
+        "🌸 Добро пожаловать в Flower Delivery Master!\nВведите название букета:"
+    )
 
-    products = Product.objects.all()
-    if products:
-        product_list = "\n".join([f"• {product.name} — {product.price} руб." for product in products])
-        await update.message.reply_text(
-            f"🌸 Добро пожаловать в Flower Delivery Master!\n\n"
-            f"📜 Вот наш каталог:\n{product_list}\n\n"
-            f"Пожалуйста, введите название букета:"
-        )
-    else:
-        await update.message.reply_text(
-            "Каталог пуст. Пожалуйста, попробуйте позже."
-        )
-        return ConversationHandler.END
+    context.user_data["telegram_username"] = user.username or "NoUsername"
+    context.user_data["telegram_user_id"] = user.id
 
-    return BOUQUET
+    return BOUQUET_NAME
 
 
 # Получение названия букета
-async def bouquet(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    bouquet_name = update.message.text.strip()
+async def bouquet_name(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    context.user_data["bouquet_name"] = update.message.text
 
-    if not Product.objects.filter(name__iexact=bouquet_name).exists():
-        await update.message.reply_text(
-            "❌ Такого букета нет в каталоге.\n"
-            "Пожалуйста, введите название из предложенного списка."
-        )
-        return BOUQUET
-
-    context.user_data['bouquet'] = bouquet_name
     await update.message.reply_text("Введите адрес доставки:")
-    return ADDRESS
+
+    return DELIVERY_ADDRESS
 
 
 # Получение адреса и сохранение заказа
-async def address(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    address = update.message.text
-    bouquet_name = context.user_data['bouquet']
-    user_id = update.message.from_user.id
-    username = update.message.from_user.username or "Без имени"
+async def delivery_address(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    delivery_address = update.message.text
 
     TelegramOrder.objects.create(
-        user_id=user_id,
-        username=username,
-        bouquet_name=bouquet_name,
-        delivery_address=address
+        bouquet_name=context.user_data["bouquet_name"],
+        telegram_username=context.user_data["telegram_username"],
+        telegram_user_id=context.user_data["telegram_user_id"],
+        delivery_address=delivery_address,
     )
 
     await update.message.reply_text(
-        f"✅ Спасибо за заказ!\n\n"
-        f"Букет: {bouquet_name}\n"
-        f"Адрес доставки: {address}\n\n"
-        f"Наш менеджер свяжется с вами."
+        f"✅ Заказ принят!\n\nБукет: {context.user_data['bouquet_name']}\n"
+        f"Адрес доставки: {delivery_address}"
     )
-
-    # 🔔 Уведомление админу
-    admin_message = (
-        f"🆕 Новый заказ!\n\n"
-        f"👤 Пользователь: @{username}\n"
-        f"📦 Букет: {bouquet_name}\n"
-        f"📍 Адрес: {address}"
-    )
-
-    try:
-        await context.bot.send_message(chat_id=ADMIN_CHAT_ID, text=admin_message)
-    except Exception as e:
-        logger.error(f"Не удалось отправить сообщение администратору: {e}")
 
     return ConversationHandler.END
+
+
+# Статистика для админа
+async def stats(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    user_id = update.effective_user.id
+    if user_id != ADMIN_ID:
+        await update.message.reply_text("❌ У вас нет доступа к статистике.")
+        return
+
+    now = datetime.now(timezone.utc) + timedelta(hours=3)
+    start_of_day = now.replace(hour=0, minute=0, second=0, microsecond=0)
+
+    orders_today = TelegramOrder.objects.filter(created_at__gte=start_of_day)
+    total_orders = orders_today.count()
+    total_revenue = total_orders * 1500  # Предположим, каждый заказ = 1500 руб
+
+    await update.message.reply_text(
+        f"📊 Статистика за сегодня ({now.strftime('%d.%m.%Y')}):\n"
+        f"🛍️ Заказов: {total_orders}\n"
+        f"💰 Выручка: {total_revenue} руб."
+    )
 
 
 # Отмена
@@ -137,78 +124,29 @@ async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     return ConversationHandler.END
 
 
-# 📊 Статистика по заказам за сегодня
-async def stats(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    if update.effective_user.id != ADMIN_CHAT_ID:
-        await update.message.reply_text("❌ У вас нет прав для этой команды.")
-        return
-
-    today = datetime.now().date()
-    orders_today = TelegramOrder.objects.filter(created_at__date=today)
-    total_orders = orders_today.count()
-
-    total_revenue = 0
-    for order in orders_today:
-        product = Product.objects.filter(name__iexact=order.bouquet_name).first()
-        if product:
-            total_revenue += product.price
-
-    message = (
-        f"📊 Статистика за {today.strftime('%d.%m.%Y')}:\n\n"
-        f"🛒 Заказов: {total_orders}\n"
-        f"💰 Выручка: {total_revenue} руб."
-    )
-
-    await update.message.reply_text(message)
-
-
-# 🔄 Проверка статуса заказа
-async def status(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    user_id = update.effective_user.id
-    orders = TelegramOrder.objects.filter(user_id=user_id).order_by('-created_at')
-
-    if not orders.exists():
-        await update.message.reply_text("❌ У вас нет активных заказов.")
-        return
-
-    last_order = orders.first()
-
-    status_dict = {
-        'pending': 'В ожидании',
-        'in_progress': 'В обработке',
-        'completed': 'Выполнен',
-        'cancelled': 'Отменён',
-    }
-
-    status = status_dict.get(last_order.status, 'Неизвестно')
-
-    await update.message.reply_text(
-        f"📦 Статус вашего последнего заказа:\n\n"
-        f"Букет: {last_order.bouquet_name}\n"
-        f"Адрес: {last_order.delivery_address}\n"
-        f"Статус: {status}"
-    )
-
-
-def main():
-    application = Application.builder().token(BOT_TOKEN).build()
+# Основная функция запуска бота
+def main() -> None:
+    app = Application.builder().token(BOT_TOKEN).build()
 
     conv_handler = ConversationHandler(
-        entry_points=[CommandHandler('start', start)],
+        entry_points=[CommandHandler("start", start)],
         states={
-            BOUQUET: [MessageHandler(filters.TEXT & ~filters.COMMAND, bouquet)],
-            ADDRESS: [MessageHandler(filters.TEXT & ~filters.COMMAND, address)],
+            BOUQUET_NAME: [
+                MessageHandler(filters.TEXT & ~filters.COMMAND, bouquet_name)
+            ],
+            DELIVERY_ADDRESS: [
+                MessageHandler(filters.TEXT & ~filters.COMMAND, delivery_address)
+            ],
         },
-        fallbacks=[CommandHandler('cancel', cancel)],
+        fallbacks=[CommandHandler("cancel", cancel)],
     )
 
-    application.add_handler(conv_handler)
-    application.add_handler(CommandHandler('stats', stats))
-    application.add_handler(CommandHandler('status', status))
+    app.add_handler(conv_handler)
+    app.add_handler(CommandHandler("stats", stats))
 
-    print("Бот запущен...")
-    application.run_polling()
+    print("🤖 Bot started...")
+    app.run_polling()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

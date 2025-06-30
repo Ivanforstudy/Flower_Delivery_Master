@@ -6,13 +6,12 @@ from django.conf.urls.static import static
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('', include('main.urls')),
+    path('accounts/', include('accounts.urls')),
     path('catalog/', include('catalog.urls')),
     path('orders/', include('orders.urls')),
     path('reviews/', include('reviews.urls')),
     path('analytics/', include('analytics.urls')),
-    path('accounts/', include('accounts.urls')),
-    path('telegram_bot/', include('telegram_bot.urls')),
-    path('analytics/', include('analytics.urls')),
+    path('bot/', include('telegram_bot.urls')),
 ]
 
 if settings.DEBUG:

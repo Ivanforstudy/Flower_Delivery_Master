@@ -1,27 +1,41 @@
+from django.contrib.auth.decorators import login_required, user_passes_test
 from django.shortcuts import render
+from datetime import datetime, timedelta
+
 from orders.models import Order, TelegramOrder
-from django.utils.timezone import now
-from datetime import timedelta
 
 
+def staff_check(user):
+    return user.is_staff
+
+
+@login_required
+@user_passes_test(staff_check)
 def dashboard(request):
-    today = now().date()
-    web_orders = Order.objects.filter(created_at__date=today).count()
-    telegram_orders = TelegramOrder.objects.filter(created_at__date=today).count()
+    now = datetime.now()
+    start_of_day = now.replace(hour=0, minute=0, second=0, microsecond=0)
 
-    web_revenue = sum(order.products.aggregate(total=models.Sum('price'))['total'] or 0 for order in Order.objects.filter(created_at__date=today))
-    telegram_revenue = TelegramOrder.objects.filter(created_at__date=today).count() * 1000  # Допустим, каждая позиция в Telegram по 1000 руб.
+    # Аналитика по веб-заказам
+    web_orders = Order.objects.filter(created_at__gte=start_of_day)
+    web_orders_count = web_orders.count()
+    web_orders_revenue = web_orders_count * 2000  # допустим, средний чек 2000 руб.
 
-    total_orders = web_orders + telegram_orders
-    total_revenue = web_revenue + telegram_revenue
+    # Аналитика по телеграм-заказам
+    telegram_orders = TelegramOrder.objects.filter(created_at__gte=start_of_day)
+    telegram_orders_count = telegram_orders.count()
+    telegram_orders_revenue = telegram_orders_count * 1500  # средний чек 1500 руб.
+
+    total_orders = web_orders_count + telegram_orders_count
+    total_revenue = web_orders_revenue + telegram_orders_revenue
 
     context = {
+        'date': now.strftime('%d.%m.%Y'),
+        'web_orders_count': web_orders_count,
+        'web_orders_revenue': web_orders_revenue,
+        'telegram_orders_count': telegram_orders_count,
+        'telegram_orders_revenue': telegram_orders_revenue,
         'total_orders': total_orders,
         'total_revenue': total_revenue,
-        'web_orders': web_orders,
-        'telegram_orders': telegram_orders,
-        'web_revenue': web_revenue,
-        'telegram_revenue': telegram_revenue,
     }
-    return render(request, 'analytics/dashboard.html', context)
 
+    return render(request, 'analytics/dashboard.html', context)
