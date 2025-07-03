@@ -2,20 +2,12 @@
 
 {% block content %}
 <h2>Отзывы</h2>
-
-{% if reviews %}
-    <ul>
-        {% for review in reviews %}
-            <li>
-                <strong>{{ review.user }}</strong>: {{ review.text }} <br>
-                Оценка: {{ review.rating }} <br>
-                {{ review.created_at|date:"d.m.Y H:i" }}
-            </li>
-        {% endfor %}
-    </ul>
-{% else %}
-    <p>Отзывов пока нет.</p>
-{% endif %}
-
+<ul>
+    {% for review in reviews %}
+        <li>
+            <strong>{{ review.user.username }}</strong>: {{ review.content }} (Оценка: {{ review.rating }})
+        </li>
+    {% endfor %}
+</ul>
 <a href="{% url 'reviews:add_review' %}">Добавить отзыв</a>
 {% endblock %}
